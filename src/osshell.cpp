@@ -55,13 +55,18 @@ int main (int argc, char **argv)
     while(running) {
         printf("osshell> ");
         std::getline(std::cin, user_input);
+
+        // extract command from user input
+        int first_space = user_input.find_first_of(" ", 0);
+        std::string command = user_input.substr(0, first_space);
+        std::string args = user_input.substr(first_space + 1, user_input.length());
         
         if(user_input.compare("exit") == 0){
             // 'exit' command
             running = 0;
         } else if(user_input.compare("history") == 0) {
             // 'history' command
-            
+
             // loop through each entry in command_history and print.
         }
 
