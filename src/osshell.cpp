@@ -16,7 +16,7 @@ int main (int argc, char **argv)
     // `os_path_list` supports up to 16 directories in PATH, 
     //     each with a directory name length of up to 64 characters
     char **os_path_list;
-    allocateArrayOfCharArrays(&os_path_list, 16, 64);
+    allocateArrayOfCharArrays(&os_path_list, 16, 128);
     char* os_path = getenv("PATH");
     splitString(os_path, ':', os_path_list);
 
@@ -25,10 +25,12 @@ int main (int argc, char **argv)
     int i = 0;
     while (os_path_list[i] != NULL)
     {
-        printf("PATH[%2d]: %s\n", i, os_path_list[i]);
+        printf("PATH[%3d]: %s\n", i, os_path_list[i]);
         i++;
     }
 
+    char **command_history;
+    allocateArrayOfCharArrays(&command_history, 128, 128);
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
@@ -51,6 +53,7 @@ int main (int argc, char **argv)
     // Free allocated memory
     freeArrayOfCharArrays(os_path_list, 16);
     freeArrayOfCharArrays(command_list, 32);
+    freeArrayOfCharArrays(command_history, 128);
 
     return 0;
 }
