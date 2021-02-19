@@ -31,6 +31,8 @@ int main (int argc, char **argv)
      *   End example code                                                               *
      ************************************************************************************/
 
+    char **command_history;
+    allocateArrayOfCharArrays(&command_history, 128, 128);
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
