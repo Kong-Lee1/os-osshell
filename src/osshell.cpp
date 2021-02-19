@@ -50,6 +50,24 @@ int main (int argc, char **argv)
     //   If yes, execute it
     //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
 
+    int running = 1;
+    std::string user_input;
+    while(running) {
+        printf("osshell> ");
+        std::getline(std::cin, user_input);
+        
+        if(user_input.compare("exit") == 0){
+            // 'exit' command
+            running = 0;
+        } else if(user_input.compare("history") == 0) {
+            // 'history' command
+            
+            // loop through each entry in command_history and print.
+        }
+
+        // search PATH folders for matching file.
+    }
+
     // Free allocated memory
     freeArrayOfCharArrays(os_path_list, 16);
     freeArrayOfCharArrays(command_list, 32);
