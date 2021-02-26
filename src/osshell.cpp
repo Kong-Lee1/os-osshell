@@ -5,10 +5,12 @@
 #include <sstream>
 #include <vector>
 #include <unistd.h>
+#include <list>
 
 void allocateArrayOfCharArrays(char ***array_ptr, size_t array_length, size_t item_size);
 void freeArrayOfCharArrays(char **array, size_t array_length);
 void splitString(std::string text, char d, char **result);
+void printHistory(std::list<std::string> command_history, int history_list_size);
 
 int main (int argc, char **argv)
 {
@@ -29,8 +31,9 @@ int main (int argc, char **argv)
         i++;
     }
 
-    char **command_history;
-    allocateArrayOfCharArrays(&command_history, 128, 128);
+    // Allocate command history doubly-linked list
+    std::list<std::string> command_history;
+    // TODO: Attempt to load command history from file
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
@@ -56,27 +59,74 @@ int main (int argc, char **argv)
         printf("osshell> ");
         std::getline(std::cin, user_input);
 
+        printf("Command recieved.\n");
         // extract command from user input
-        int first_space = user_input.find_first_of(" ", 0);
-        std::string command = user_input.substr(0, first_space);
-        std::string args = user_input.substr(first_space + 1, user_input.length());
+        splitString(user_input, ' ', command_list);
+
+        printf("Command split.\n");
         
-        if(user_input.compare("exit") == 0){
+        //std::cout << user_input << "\n";
+
+        std::string command = command_list[0];
+
+        printf("First command: %s\n", command.c_str());
+
+        // check preset commands
+        if(command.compare("exit") == 0){
             // 'exit' command
             running = 0;
-        } else if(user_input.compare("history") == 0) {
+        } else if(command.compare("history") == 0) {
             // 'history' command
 
+            if(command_list[1] != NULL) {
+                printf("Checking arg\n");
+                std::string argument = command_list[1];
+                if(argument.compare("clear") == 0) {
+                    // TODO: Make this work
+                    printf("History being cleared...\n");
+                    // argument is `clear`, i.e. `history clear`
+                    // empty out the command history
+                    while(command_history.size() > 0) {
+                        printf("Popping args...\n");
+                        command_history.pop_back();
+                    }
+                } else {
+                    // parse to int
+                    // TODO: Do this
+                }
+            } else {
+                int history_list_size = command_history.size();
+                printHistory(command_history, history_list_size);
+            }
+
+
             // loop through each entry in command_history and print.
+        } else {
+            // not a pre-defined command
+
+            // check if searching for a local command
+            if(command.substr(0,2).compare("./") == 0) {
+                // command is a local executable
+                // TODO: Implement local command execution
+            } else {
+                // command is a global executable, check path
+                // TODO: Implement command path search
+                // search PATH folders for matching file.
+            }
         }
 
-        // search PATH folders for matching file.
+        // add the command string to history
+        // TODO: Append command string to history
+        command_history.push_front(user_input);
+        while(command_history.size() > 128) {
+            command_history.pop_back();
+        }
+
     }
 
     // Free allocated memory
     freeArrayOfCharArrays(os_path_list, 16);
     freeArrayOfCharArrays(command_list, 32);
-    freeArrayOfCharArrays(command_history, 128);
 
     return 0;
 }
@@ -174,5 +224,14 @@ void splitString(std::string text, char d, char **result)
     {
         strcpy(result[i], list[i].c_str());
     }
-    result[list.size()] = NULL;
+    //result[list.size()] = NULL;
+}
+
+void printHistory(std::list<std::string> command_history, int history_list_size) {
+    int history_index = 0;
+    for(std::list<std::string>::reverse_iterator it = command_history.rbegin(); it != command_history.rend(); ++it){
+        history_index += 1;
+        std::string cmd = (*it);
+        std::cout << "  " << history_index << ": " << cmd << '\n';
+    }
 }
