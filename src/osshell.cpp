@@ -66,10 +66,15 @@ int main (int argc, char **argv)
                     }
                 } else {
                     // parse to int
-                    // TODO: Do this
+                    int num = std::stoi(argument);
+                    if(num > command_history.size()) {
+                        printf("ERROR: Command only has %d entries.\n", (int)command_history.size());
+                    } else {
+                        printHistory(command_history, num);
+                    }
                 }
             } else {
-                int history_list_size = command_history.size();
+                int history_list_size = (int)command_history.size();
                 printHistory(command_history, history_list_size);
             }
 
@@ -196,10 +201,13 @@ void freeArrayOfCharArrays(char **array, size_t array_length)
 }
 
 void printHistory(std::list<std::string> command_history, int history_list_size) {
+    int print_marker = (int)command_history.size() - history_list_size;
     int history_index = 0;
     for(std::list<std::string>::reverse_iterator it = command_history.rbegin(); it != command_history.rend(); ++it){
         history_index += 1;
-        std::string cmd = (*it);
-        std::cout << "  " << history_index << ": " << cmd << '\n';
+        if (history_index > print_marker){
+            std::string cmd = (*it);
+            std::cout << "  " << history_index << ": " << cmd << '\n';
+        }
     }
 }
