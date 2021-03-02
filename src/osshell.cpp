@@ -17,8 +17,8 @@ void printHistory(std::list<std::string> command_history, int history_list_size)
 bool isProgram(std::string name, std::string folder);
 bool isInPath(std::string name, std::vector<std::string> path_list, std::string* pathLocation);
 void runProgram(std::string command, std::string path, char*** command_list_exec);
-void loadHistory(std::list<std::string> history);
-void saveHistory(std::list<std::string> history);
+void loadHistory(std::list<std::string> *history);
+void saveHistory(std::list<std::string> *history);
 
 int main (int argc, char **argv)
 {
@@ -30,7 +30,7 @@ int main (int argc, char **argv)
     // Allocate command history doubly-linked list
     std::list<std::string> command_history;
     // TODO: Attempt to load command history from file
-    loadHistory(command_history);
+    loadHistory(&command_history);
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
@@ -94,7 +94,7 @@ int main (int argc, char **argv)
                 if(isProgram(command, "")) {
                     runProgram(command, "", &command_list_exec);
                 } else {
-                    printf("ERROR: %s not found.", command.c_str());
+                    printf("ERROR: %s not found.\n", command.c_str());
                 }
             } else {
                 // command is a global executable, check path
@@ -103,7 +103,7 @@ int main (int argc, char **argv)
                 if(isInPath(command, os_path_list, &pathLocation)) {
                     runProgram(command, pathLocation, &command_list_exec);
                 } else {
-                    printf("ERROR: %s not found.", command.c_str());
+                    printf("ERROR: %s not found.\n", command.c_str());
                 }
             }
         }
@@ -114,7 +114,7 @@ int main (int argc, char **argv)
             command_history.pop_back();
         }
     }
-    saveHistory(command_history);
+    saveHistory(&command_history);
     return 0;
 }
 
@@ -264,23 +264,23 @@ void runProgram(std::string command, std::string path, char*** command_list_exec
     }
 }
 
-void loadHistory(std::list<std::string> history) {
+void loadHistory(std::list<std::string> *history) {
     std::ifstream file;
     file.open("history");
     std::string line;
     if(file.is_open()) {
         while(std::getline(file, line)) {
-            history.push_front(line);
+            (*history).push_front(line);
         }
         file.close();
     }
     return;
 }
 
-void saveHistory(std::list<std::string> history) {
+void saveHistory(std::list<std::string> *history) {
     std::ofstream file;
     file.open("history");
-    for(std::list<std::string>::reverse_iterator it = history.rbegin(); it != history.rend(); ++it){
+    for(std::list<std::string>::reverse_iterator it = (*history).rbegin(); it != (*history).rend(); ++it){
         std::string cmd = (*it);
         file << cmd << "\n";
     }
