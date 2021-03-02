@@ -6,11 +6,16 @@
 #include <vector>
 #include <unistd.h>
 #include <list>
+#include <filesystem>
+#include <sys/wait.h>
 
 void splitString(std::string text, char d, std::vector<std::string>& result);
 void vectorOfStringsToArrayOfCharArrays(std::vector<std::string>& list, char ***result);
 void freeArrayOfCharArrays(char **array, size_t array_length);
 void printHistory(std::list<std::string> command_history, int history_list_size);
+bool isProgram(std::string name, std::string folder);
+bool isInPath(std::string name, std::vector<std::string> path_list, std::string* pathLocation);
+void runProgram(std::string command, std::string path, char*** command_list_exec);
 
 int main (int argc, char **argv)
 {
@@ -45,6 +50,7 @@ int main (int argc, char **argv)
 
         // extract command from user input
         splitString(user_input, ' ', command_list);
+        vectorOfStringsToArrayOfCharArrays(command_list, &command_list_exec);
 
         std::string command = command_list[0];
 
@@ -58,7 +64,6 @@ int main (int argc, char **argv)
             if(command_list.size() > 1) {
                 std::string argument = command_list.at(1);
                 if(argument.compare("clear") == 0) {
-                    // TODO: Make this work
                     // argument is `clear`, i.e. `history clear`
                     // empty out the command history
                     while(command_history.size() > 0) {
@@ -87,15 +92,26 @@ int main (int argc, char **argv)
             if(command.substr(0,2).compare("./") == 0) {
                 // command is a local executable
                 // TODO: Implement local command execution
+                if(isProgram(command, "")) {
+                    runProgram(command, "", &command_list_exec);
+                } else {
+                    printf("ERROR: %s not found.", command.c_str());
+                }
             } else {
                 // command is a global executable, check path
                 // TODO: Implement command path search
                 // search PATH folders for matching file.
+
+                std::string pathLocation;
+                if(isInPath(command, os_path_list, &pathLocation)) {
+                    runProgram(command, pathLocation, &command_list_exec);
+                } else {
+                    printf("ERROR: %s not found.", command.c_str());
+                }
             }
         }
 
         // add the command string to history
-        // TODO: Append command string to history
         command_history.push_front(user_input);
         while(command_history.size() > 128) {
             command_history.pop_back();
@@ -209,5 +225,45 @@ void printHistory(std::list<std::string> command_history, int history_list_size)
             std::string cmd = (*it);
             std::cout << "  " << history_index << ": " << cmd << '\n';
         }
+    }
+}
+
+bool isProgram(std::string name, std::string folder) {
+    std::string pathString = folder + name;
+    if(std::filesystem::is_regular_file(pathString)) {
+        if(!access(pathString.c_str(), X_OK)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isInPath(std::string name, std::vector<std::string> path_list, std::string* pathLocation) {
+    for(int i = 0; i < path_list.size(); i++) {
+        std::string pathFolder = path_list.at(i) + "/";
+        if(isProgram(name, pathFolder)) {
+            (*pathLocation) = pathFolder;
+            return true;
+        }
+    }
+    return false;
+}
+
+void runProgram(std::string command, std::string path, char*** command_list_exec) {
+    pid_t pid = fork();
+
+    if(pid == 0) {
+        // child
+        std::string cmdv = path + command;
+        execv(cmdv.c_str(), *command_list_exec);
+        exit(0);
+    } else if(pid == -1) {
+        // failed
+        printf("ERROR: Unable to fork.\n");
+        exit(EXIT_FAILURE);
+    } else {
+        // parent
+        waitpid(pid, NULL, 0);
+        return;
     }
 }
