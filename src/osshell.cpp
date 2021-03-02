@@ -8,6 +8,7 @@
 #include <list>
 #include <filesystem>
 #include <sys/wait.h>
+#include <fstream>
 
 void splitString(std::string text, char d, std::vector<std::string>& result);
 void vectorOfStringsToArrayOfCharArrays(std::vector<std::string>& list, char ***result);
@@ -16,6 +17,8 @@ void printHistory(std::list<std::string> command_history, int history_list_size)
 bool isProgram(std::string name, std::string folder);
 bool isInPath(std::string name, std::vector<std::string> path_list, std::string* pathLocation);
 void runProgram(std::string command, std::string path, char*** command_list_exec);
+void loadHistory(std::list<std::string> history);
+void saveHistory(std::list<std::string> history);
 
 int main (int argc, char **argv)
 {
@@ -27,6 +30,7 @@ int main (int argc, char **argv)
     // Allocate command history doubly-linked list
     std::list<std::string> command_history;
     // TODO: Attempt to load command history from file
+    loadHistory(command_history);
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
@@ -82,16 +86,11 @@ int main (int argc, char **argv)
                 int history_list_size = (int)command_history.size();
                 printHistory(command_history, history_list_size);
             }
-
-
-            // loop through each entry in command_history and print.
         } else {
             // not a pre-defined command
-
             // check if searching for a local command
             if(command.substr(0,2).compare("./") == 0) {
                 // command is a local executable
-                // TODO: Implement local command execution
                 if(isProgram(command, "")) {
                     runProgram(command, "", &command_list_exec);
                 } else {
@@ -99,9 +98,7 @@ int main (int argc, char **argv)
                 }
             } else {
                 // command is a global executable, check path
-                // TODO: Implement command path search
                 // search PATH folders for matching file.
-
                 std::string pathLocation;
                 if(isInPath(command, os_path_list, &pathLocation)) {
                     runProgram(command, pathLocation, &command_list_exec);
@@ -116,9 +113,8 @@ int main (int argc, char **argv)
         while(command_history.size() > 128) {
             command_history.pop_back();
         }
-
     }
-
+    saveHistory(command_history);
     return 0;
 }
 
@@ -266,4 +262,28 @@ void runProgram(std::string command, std::string path, char*** command_list_exec
         waitpid(pid, NULL, 0);
         return;
     }
+}
+
+void loadHistory(std::list<std::string> history) {
+    std::ifstream file;
+    file.open("history");
+    std::string line;
+    if(file.is_open()) {
+        while(std::getline(file, line)) {
+            history.push_front(line);
+        }
+        file.close();
+    }
+    return;
+}
+
+void saveHistory(std::list<std::string> history) {
+    std::ofstream file;
+    file.open("history");
+    for(std::list<std::string>::reverse_iterator it = history.rbegin(); it != history.rend(); ++it){
+        std::string cmd = (*it);
+        file << cmd << "\n";
+    }
+    file.close();
+    return;
 }
