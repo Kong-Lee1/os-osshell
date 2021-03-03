@@ -26,3 +26,4 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 # REMOVE OLD FILES
 clean:
 	rm -f $(OBJS) $(EXEC)
+	rm -f history out01.txt out02.txt

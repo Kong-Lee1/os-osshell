@@ -19,6 +19,7 @@ bool isInPath(std::string name, std::vector<std::string> path_list, std::string*
 void runProgram(std::string command, std::string path, char*** command_list_exec);
 void loadHistory(std::list<std::string> *history);
 void saveHistory(std::list<std::string> *history);
+bool isNumeric(std::string input);
 
 int main (int argc, char **argv)
 {
@@ -47,10 +48,14 @@ int main (int argc, char **argv)
     //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
 
     int running = 1;
+    bool flag_addToHistory;
     std::string user_input;
     while(running) {
         printf("osshell> ");
         std::getline(std::cin, user_input);
+
+        // set flags
+        flag_addToHistory = true;
 
         // extract command from user input
         splitString(user_input, ' ', command_list);
@@ -61,6 +66,7 @@ int main (int argc, char **argv)
         // check preset commands
         if(command.compare("exit") == 0){
             // 'exit' command
+            printf("\n");
             running = 0;
         } else if(command.compare("history") == 0) {
             // 'history' command
@@ -73,13 +79,18 @@ int main (int argc, char **argv)
                     while(command_history.size() > 0) {
                         command_history.pop_back();
                     }
+                    flag_addToHistory = false;
                 } else {
                     // parse to int
-                    int num = std::stoi(argument);
-                    if(num > command_history.size()) {
-                        printf("ERROR: Command only has %d entries.\n", (int)command_history.size());
+                    if(isNumeric(argument)) {
+                        int num = std::stoi(argument);
+                        if(num <= 0) {
+                            printf("Error: history expects an integer > 0 (or 'clear')\n");
+                        } else {
+                            printHistory(command_history, num);
+                        }
                     } else {
-                        printHistory(command_history, num);
+                        printf("Error: history expects an integer > 0 (or 'clear')\n");
                     }
                 }
             } else {
@@ -94,7 +105,7 @@ int main (int argc, char **argv)
                 if(isProgram(command, "")) {
                     runProgram(command, "", &command_list_exec);
                 } else {
-                    printf("ERROR: %s not found.\n", command.c_str());
+                    printf("%s: Error command not found\n", command.c_str());
                 }
             } else {
                 // command is a global executable, check path
@@ -103,15 +114,17 @@ int main (int argc, char **argv)
                 if(isInPath(command, os_path_list, &pathLocation)) {
                     runProgram(command, pathLocation, &command_list_exec);
                 } else {
-                    printf("ERROR: %s not found.\n", command.c_str());
+                    printf("%s: Error command not found\n", command.c_str());
                 }
             }
         }
 
         // add the command string to history
-        command_history.push_front(user_input);
-        while(command_history.size() > 128) {
-            command_history.pop_back();
+        if(flag_addToHistory){
+            command_history.push_front(user_input);
+            while(command_history.size() > 128) {
+                command_history.pop_back();
+            }
         }
     }
     saveHistory(&command_history);
@@ -286,4 +299,14 @@ void saveHistory(std::list<std::string> *history) {
     }
     file.close();
     return;
+}
+
+bool isNumeric(std::string input) {
+    for(int i = 0; i < input.size(); i++) {
+        int cvar = (int)input.at(i);
+        if(cvar < 48 || cvar > 57) {
+            return false;
+        }
+    }
+    return true;
 }
